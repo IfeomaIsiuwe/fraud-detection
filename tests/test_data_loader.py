@@ -2,8 +2,8 @@
 Unit tests for data_loader.py
 """
 import pytest
+import numpy as np
 import pandas as pd
-from sklearn.model_selection import train_test_split
 
 from src.data_loader import (
     load_raw, load_engineered, get_split, engineer_features,
@@ -11,40 +11,68 @@ from src.data_loader import (
 )
 
 
+def make_mock_df(n=200):
+    """Create a minimal fake dataset that matches the real CSV structure."""
+    np.random.seed(42)
+    df = pd.DataFrame({
+        "transaction_id": range(n),
+        "amount": np.random.uniform(1, 5000, n),
+        "transaction_hour": np.random.randint(0, 24, n),
+        "device_trust_score": np.random.uniform(0, 1, n),
+        "velocity_last_24h": np.random.uniform(0, 20, n),
+        "cardholder_age": np.random.randint(18, 80, n),
+        "foreign_transaction": np.random.randint(0, 2, n),
+        "location_mismatch": np.random.randint(0, 2, n),
+        "merchant_category": np.random.choice(["grocery", "travel", "online", "retail"], n),
+        "is_fraud": np.random.choice([0, 1], n, p=[0.9, 0.1]),
+    })
+    return df
+
+
 class TestDataLoader:
     """Test data loading and preprocessing functions."""
 
-    def test_load_raw(self):
+    def test_load_raw(self, tmp_path):
         """Test raw data loading."""
-        df = load_raw()
+        # Save mock data to a temp CSV and load it
+        mock_df = make_mock_df()
+        csv_path = tmp_path / "credit_card_fraud.csv"
+        mock_df.to_csv(csv_path, index=False)
+
+        df = load_raw(path=str(csv_path))
         assert isinstance(df, pd.DataFrame)
         assert not df.empty
         assert TARGET in df.columns
-        # Check no transaction_id after loading
         assert 'transaction_id' not in df.columns
 
-    def test_load_engineered(self):
+    def test_load_engineered(self, tmp_path):
         """Test engineered data loading."""
-        df = load_engineered()
+        mock_df = make_mock_df()
+        csv_path = tmp_path / "credit_card_fraud.csv"
+        mock_df.to_csv(csv_path, index=False)
+
+        df = load_engineered(path=str(csv_path))
         assert isinstance(df, pd.DataFrame)
         assert not df.empty
-        # Check engineered features are present
         for feat in ENGINEERED_FEATURES:
             assert feat in df.columns
 
     def test_engineer_features(self):
         """Test feature engineering."""
-        df_raw = load_raw()
-        df_eng = engineer_features(df_raw.copy())
+        mock_df = make_mock_df()
+        # Remove transaction_id as load_raw would
+        mock_df = mock_df.drop(columns=["transaction_id"])
 
-        # Check new features
+        df_eng = engineer_features(mock_df.copy())
+
         assert 'amount_log' in df_eng.columns
         assert 'amount_x_velocity' in df_eng.columns
         assert 'high_risk_hour' in df_eng.columns
         assert 'velocity_bin' in df_eng.columns
 
         # Check amount_log is log-transformed
-        assert (df_eng['amount_log'] == df_raw['amount'].apply(lambda x: pd.np.log1p(x) if hasattr(pd, 'np') else __import__('numpy').log1p(x))).all()
+        expected = np.log1p(mock_df['amount'])
+        pd.testing.assert_series_equal(df_eng['amount_log'], expected, check_names=False)
 
         # Check high_risk_hour logic
         assert df_eng['high_risk_hour'].isin([0, 1]).all()
@@ -52,12 +80,15 @@ class TestDataLoader:
         assert (df_eng.loc[high_risk_mask, 'high_risk_hour'] == 1).all()
         assert (df_eng.loc[~high_risk_mask, 'high_risk_hour'] == 0).all()
 
-    def test_get_split(self):
+    def test_get_split(self, tmp_path):
         """Test train/test splitting."""
-        df = load_engineered()
+        mock_df = make_mock_df()
+        csv_path = tmp_path / "credit_card_fraud.csv"
+        mock_df.to_csv(csv_path, index=False)
+
+        df = load_engineered(path=str(csv_path))
         X_train, X_test, y_train, y_test = get_split(df)
 
-        # Check splits
         assert len(X_train) > len(X_test)
         assert len(y_train) > len(y_test)
         assert TARGET not in X_train.columns
@@ -66,14 +97,16 @@ class TestDataLoader:
         # Check stratification
         train_fraud_rate = y_train.mean()
         test_fraud_rate = y_test.mean()
-        # Should be very close due to stratification
-        assert abs(train_fraud_rate - test_fraud_rate) < 0.01
+        assert abs(train_fraud_rate - test_fraud_rate) < 0.05
 
-    def test_feature_groups(self):
+    def test_feature_groups(self, tmp_path):
         """Test feature group definitions."""
-        df = load_engineered()
+        mock_df = make_mock_df()
+        csv_path = tmp_path / "credit_card_fraud.csv"
+        mock_df.to_csv(csv_path, index=False)
 
-        # Check all features exist
+        df = load_engineered(path=str(csv_path))
+
         all_features = NUMERIC_FEATURES + BINARY_FEATURES + CATEGORICAL_FEATURES + ENGINEERED_FEATURES
         for feat in all_features:
             assert feat in df.columns

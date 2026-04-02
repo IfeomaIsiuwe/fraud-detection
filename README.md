@@ -4,6 +4,16 @@ A production-ready machine learning pipeline for identifying fraudulent credit c
 
 ---
 
+## Data
+
+Download the dataset from Kaggle:
+[Credit Card Fraud Detection](https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud)
+
+Place the file at: `data/raw/credit_card_fraud.csv`
+
+---
+
+
 ## Problem
 
 Credit card fraud costs the industry billions annually. A naive classifier that flags everything as legitimate achieves 99% accuracy on a typical dataset — and catches zero fraud. This project treats fraud detection as what it actually is: a **cost-sensitive, class-imbalanced ranking problem** where the cost of missing fraud vastly outweighs the cost of a false alarm.
