@@ -5,6 +5,8 @@ Evaluation helpers shared across all modelling notebooks.
 Covers classification metrics, cost-sensitive analysis, and cross-validation.
 """
 
+from __future__ import annotations
+
 import numpy as np
 import pandas as pd
 from sklearn.metrics import (
