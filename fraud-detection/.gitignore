@@ -1,0 +1,33 @@
+# Data — never commit raw data to git
+data/raw/*.csv
+data/raw/*.parquet
+data/raw/*.xlsx
+
+# Saved models
+models/*.pkl
+models/*.joblib
+
+# Jupyter
+.ipynb_checkpoints/
+**/.ipynb_checkpoints/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Environments
+.env
+.venv
+venv/
+env/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Reports (generated — re-run notebooks to reproduce)
+reports/figures/*.png
