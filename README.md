@@ -1,6 +1,6 @@
-# Credit Card Fraud Detection
+# End-to-End Cost-Sensitive Credit Card Fraud Detection (E-CCFD System)
 
-A production-ready machine learning pipeline for identifying fraudulent credit card transactions, built with a focus on **business-driven evaluation**, **rigorous validation**, and **model interpretability**.
+**E-CCFD** is a **production-grade**, end-to-end fraud detection system addressing the full ML lifecycle from raw data to **business-driven deployment decisions**. Designed to reflect the operational constraints of financial services fraud teams, including severe class imbalance, asymmetric misclassification costs, and transaction-level model auditability.
 
 ---
 
